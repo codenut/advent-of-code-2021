@@ -16,27 +16,23 @@ fn valid_adjacents(row: i32, col: i32, n: i32, m: i32) -> Vec<(i32, i32)> {
         .collect();
 }
 
-fn get_flashed(dim_to_energy: &mut HashMap<(i32, i32), i32>) -> (i32, i32) {
-    for ((row, col), energy) in dim_to_energy {
-        if *energy == 10 {
-            return (*row, *col);
-        }
-    }
-    return (-1, -1);
-}
-
 fn simulate(dim_to_energy: &mut HashMap<(i32, i32), i32>, n: i32, m: i32) -> i32 {
+    let mut flashed: Vec<(i32, i32)> = Vec::new();
     for i in 0..n {
         for j in 0..m {
-            let energy = dim_to_energy.get(&(i, j)).unwrap();
+            let energy = *dim_to_energy.get(&(i, j)).unwrap();
             dim_to_energy.insert((i, j), energy + 1);
+
+            if energy + 1 == 10 {
+                flashed.push((i, j));
+            }
         }
     }
 
     let mut seen: HashSet<(i32, i32)> = HashSet::new();
 
-    while *dim_to_energy.values().max().unwrap() == 10 {
-        let (row, col) = get_flashed(dim_to_energy);
+    while flashed.len() > 0 {
+        let (row, col) = flashed.pop().unwrap();
         dim_to_energy.insert((row, col), 0);
 
         if seen.contains(&(row, col)) {
@@ -46,9 +42,12 @@ fn simulate(dim_to_energy: &mut HashMap<(i32, i32), i32>, n: i32, m: i32) -> i32
         seen.insert((row, col));
 
         for (nrow, ncol) in valid_adjacents(row, col, n, m) {
-            let energy = dim_to_energy.get(&(nrow, ncol)).unwrap();
-            if *energy < 10 && !seen.contains(&(nrow, ncol)) {
+            let energy = *dim_to_energy.get(&(nrow, ncol)).unwrap();
+            if energy < 10 && !seen.contains(&(nrow, ncol)) {
                 dim_to_energy.insert((nrow, ncol), energy + 1);
+                if energy + 1 == 10 {
+                    flashed.push((nrow, ncol));
+                }
             }
         }
     }
